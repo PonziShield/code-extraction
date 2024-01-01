@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+dataset_creation/data/PonziDataset.csv
+
+
 # Distribution / packaging
 .Python
 build/
