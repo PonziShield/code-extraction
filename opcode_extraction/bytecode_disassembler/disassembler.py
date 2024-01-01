@@ -8,6 +8,7 @@ from bytecode_disassembler.opcode import Opcode
 from bytecode_disassembler.opcodes import Opcodes, OpcodesFunction
 from iterators.iterators import StringTwoCharIterator
 from typing import List
+from ast import literal_eval
 import re
 
 class Disassembler:
@@ -21,6 +22,7 @@ class Disassembler:
         self.opcodes = []
         self.load_opcodes()
         self.disassembled_opcode_values = []
+        self.encoded_opcodes = []
 
     @staticmethod
     def clean_data(code: str) -> List[str]:
@@ -32,7 +34,9 @@ class Disassembler:
         iterator = StringTwoCharIterator(self.code)
         disassembled_code_builder = []
         disassembled_values = []
+        encoding_opcodes = []
         offset = 0
+
         while iterator.has_next():
             next_byte = next(iterator)
             opcode = Opcode()
@@ -40,6 +44,7 @@ class Disassembler:
             opcode_hex = int(next_byte, 16)
             opcode_definition = OpcodesFunction.get_opcode(opcode_hex)
             opcode_value = ""
+
             if opcode_definition is None:
                 print("Unknown opcode: " + str(opcode_hex))
                 opcode.set_opcode(Opcodes.UNKNOWN)
@@ -54,14 +59,28 @@ class Disassembler:
                     if parameter_string == "":
                         opcode.set_opcode(Opcodes.UNKNOWN)
                     else:
-                        opcode.set_parameter(int(parameter_string, 16))
+                        try:
+                            opcode.set_parameter(int(parameter_string, 16))
+                        except ValueError:
+                            print(f"Invalid hexadecimal literal: {parameter_string}")
+                            opcode.set_opcode(Opcodes.UNKNOWN)
+
             offset += 1
             self.opcodes.append(opcode)
             disassembled_code_builder.append(str(opcode) + "\n")
             disassembled_values.append(opcode_value)
 
+        for val in disassembled_values:
+            try:
+                opcode_int = int(val, 16)
+                encoding_opcodes.append(opcode_int)
+            except ValueError:
+                print(f"Invalid hexadecimal literal: {val}")
+
+
         self.disassembled_code = "".join(disassembled_code_builder)
         self.disassembled_opcode_values = disassembled_values
+        self.encoded_opcodes = encoding_opcodes
 
     def get_parameter(self, parameters_num: int, iterator: StringTwoCharIterator) -> str:
         sb = ["0x"]
@@ -86,6 +105,9 @@ class Disassembler:
 
     def get_disassembled_opcode_values(self) -> List[str]:
         return self.disassembled_opcode_values
+
+    def get_encoded_opcodes(self) -> List[int]:
+        return self.encoded_opcodes
 
 
 # if __name__ == "__main__":
