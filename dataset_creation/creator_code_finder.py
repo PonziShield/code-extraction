@@ -5,6 +5,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import csv
 import pandas as pd
+import statistics
 
 class CreatorCodeFinder:
     def __init__(self,no_of_files):
@@ -13,8 +14,42 @@ class CreatorCodeFinder:
         self.api_key="74EXH3ZYYXPYAA9M1AAUCHSXXQ62MVXANW"
 
         df = pd.read_csv(self.dataset)
-        self.filtered_df = df[['address', 'creator', 'label']]
+        self.filtered_df = df[['address', 'creator', 'label', 'contractCode']]
         self.smart_contract_details = {}
+
+    def bytecode_size_find(self):
+        filtered_df = self.filtered_df
+        ponzi_bytecode_lengths = []
+        non_ponzi_bytecode_lengths = []
+        for i in range(len(filtered_df)):
+            if i >= self.no_of_files:
+                break
+
+            bytecode = filtered_df.loc[i, "contractCode"]
+            label = filtered_df.loc[i, "label"]
+
+            if label == 1:
+                ponzi_bytecode_lengths.append(len(bytecode))
+            else:
+                non_ponzi_bytecode_lengths.append(len(bytecode))
+
+        data = {
+            'Smart Contracts': ['Ponzi', 'Non Ponzi'],
+            'Lowest Length': [min(ponzi_bytecode_lengths), min(non_ponzi_bytecode_lengths)],
+            'Highest Length': [max(ponzi_bytecode_lengths), max(non_ponzi_bytecode_lengths)],
+            'Mode of Lengths': [statistics.mode(ponzi_bytecode_lengths),
+                                statistics.mode(non_ponzi_bytecode_lengths)],
+            'Average Length': [statistics.mean(ponzi_bytecode_lengths),
+                               statistics.mean(non_ponzi_bytecode_lengths)],
+            'Median of Lengths': [statistics.median(ponzi_bytecode_lengths),
+                                  statistics.median(non_ponzi_bytecode_lengths)]
+        }
+
+        df = pd.DataFrame(data)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', 1000)
+
+        print(df)
 
 
 
@@ -65,4 +100,5 @@ class CreatorCodeFinder:
 
 
 creator_finder = CreatorCodeFinder(6498)
-creator_finder.creator_codes_find()
+# creator_finder.creator_codes_find()
+creator_finder.bytecode_size_find()
